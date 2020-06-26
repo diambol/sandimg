@@ -7,9 +7,11 @@ imsize = 4;
 
 nhoodsize = 3;
 nhoodsize2 = (nhoodsize-1)/2;
-%  imin = imread('/Users/Khan/Documents/fr.png');
+imin = imread('/Users/Khan/Documents/fr.png');
+imin = rgb2gray(imin);
+imin0 = im2double(imin);
 
-imin = zeros(50,50);
+%imin = zeros(50,50);
 
 % imin(1000,1000) = 10000000;
 % imin(241:260,250) = floor(rand(20,20)*(thold+1))*1000;
@@ -26,18 +28,18 @@ imin = zeros(50,50);
 % 
 
 
-imin = zeros(imsize,imsize);
+img = zeros(imsize,imsize);
 
 
 %imin(floor(imsize/2)-10:floor(imsize/2)+10,floor(imsize/2)-10:floor(imsize/2)+10)=10;
-imin(floor(imsize/2),floor(imsize/2))=1000000;
+img(floor(imsize/2),floor(imsize/2))=1000000;
 
 
 % imin = randi(10,imsize,imsize);
 
 
 iniminds = [1:imsize^2];
-imin_notempty = iniminds * logical(imin(:));
+imin_notempty = iniminds * logical(img(:));
 
 
 
@@ -47,8 +49,8 @@ imin_notempty = iniminds * logical(imin(:));
 % imin = zeros(2000,2000);
 %imin(1000,1000)=1000000;
 % imin = imin/max(imin(:));
-[immag, imdir]=imgradient((imin));
-[imx,imy]=imgradientxy(imin);
+[immag, imdir]=imgradient((img));
+[imx,imy]=imgradientxy(img);
 imdirsin = sind(imdir);
 imdircos = cosd(imdir);
 
@@ -65,8 +67,8 @@ ex2 = abs(sind(imdir))==(max(abs(sind(imdir)),abs(cosd(imdir))));
 
 ex3=ex2.*(sind(imdir)) + (~ex2).*sign(cosd(imdir));
 
-sizex = size(imin,1);
-sizey = size(imin,2);
+sizex = size(img,1);
+sizey = size(img,2);
 
 nhoodsize = 3;
 nhoodsize2 = (nhoodsize-1)/2;
@@ -78,7 +80,7 @@ kernely = (x*1i)'.* ones(1,nhoodsize);
 kernelx = x.* ones(1,nhoodsize)';
 vectorkernel = kernely+kernelx;
 imindiff = [];
-imindiff2 = zeros(size(imin)-nhoodsize2*2);
+imindiff2 = zeros(size(img)-nhoodsize2*2);
 imindiffcomplex = [];
 
 
@@ -86,13 +88,18 @@ imindiffcomplex = [];
 imgsnapshot=0;
 
 %  img = gpuArray(imin);
- img = (imin);
+ %img = (imin);
 
 nsteps = 100000;
 stepctr =0;
 % for stepctr = 1:nsteps
 tic
 while 1
+    
+    imin = imresize(imin0,size(img));
+    imin = imin - min(imin(:));
+    imin  = imin./max(imin(:));
+%    imin = imin*4;
     
     stepctr = stepctr+1;
     
@@ -131,14 +138,26 @@ while 1
 %     [a,b]=ind2sub([imsize,imsize],iminrandind)
 %     
     
-if img(randpix(1),randpix(2)) >= 4
+%if img(randpix(1),randpix(2)) >= 4
+if img(randpix(1),randpix(2)) >= imin(randpix(1),randpix(2))*4
+%if img(randpix(1),randpix(2)) >= 4
+%     img(randpix(1)-1,randpix(2)) = img(randpix(1)-1,randpix(2))+1;
+%     img(randpix(1)+1,randpix(2)) = img(randpix(1)+1,randpix(2))+1;
+%     img(randpix(1),randpix(2)-1) = img(randpix(1),randpix(2)-1)+1;
+%     img(randpix(1),randpix(2)+1) = img(randpix(1),randpix(2)+1)+1;
+%     
+%     img(randpix(1),randpix(2))=img(randpix(1),randpix(2))-4;
+%  
+    img(randpix(1)-1,randpix(2)) = img(randpix(1)-1,randpix(2))+...
+        imin(randpix(1),randpix(2));
+    img(randpix(1)+1,randpix(2)) = img(randpix(1)+1,randpix(2))+...
+        imin(randpix(1),randpix(2));
+    img(randpix(1),randpix(2)-1) = img(randpix(1),randpix(2)-1)+...
+        imin(randpix(1),randpix(2));
+    img(randpix(1),randpix(2)+1) = img(randpix(1),randpix(2)+1)+...
+        imin(randpix(1),randpix(2));
     
-    img(randpix(1)-1,randpix(2)) = img(randpix(1)-1,randpix(2))+1;
-    img(randpix(1)+1,randpix(2)) = img(randpix(1)+1,randpix(2))+1;
-    img(randpix(1),randpix(2)-1) = img(randpix(1),randpix(2)-1)+1;
-    img(randpix(1),randpix(2)+1) = img(randpix(1),randpix(2)+1)+1;
-    
-    img(randpix(1),randpix(2))=img(randpix(1),randpix(2))-4;
+    img(randpix(1),randpix(2))=img(randpix(1),randpix(2))-imin(randpix(1),randpix(2))*4;
     
 else
     
@@ -148,7 +167,7 @@ end
 
 
 
-if ~mod(stepctr,10000)
+if ~mod(stepctr,100)
 toc
 %     if ~sum(img(:)~=imgsnapshot(:))
 %     break
